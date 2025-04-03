@@ -1,0 +1,1973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthSphere Pro - Advanced Health Monitoring</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --secondary: #3f37c9;
+            --accent: #f72585;
+            --danger: #ef233c;
+            --warning: #ff9e00;
+            --success: #4cc9f0;
+            --dark: #212529;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --glass: rgba(255, 255, 255, 0.9);
+            --glass-dark: rgba(0, 0, 0, 0.2);
+            --shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            --border-radius: 16px;
+            --transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] {
+            --primary: #3a56e8;
+            --primary-light: #3f8ef5;
+            --secondary: #2a2d9e;
+            --accent: #e5177b;
+            --dark: #f8f9fa;
+            --light: #212529;
+            --glass: rgba(33, 37, 41, 0.9);
+            --glass-dark: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--light);
+            color: var(--dark);
+            transition: var(--transition);
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-right: 1px solid var(--glass-dark);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .logo i {
+            font-size: 1.5rem;
+        }
+
+        .theme-toggle {
+            background: var(--glass-dark);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--dark);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-toggle i {
+            position: absolute;
+            transition: var(--transition);
+        }
+
+        .theme-toggle .fa-moon {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        [data-theme="dark"] .theme-toggle .fa-moon {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        [data-theme="dark"] .theme-toggle .fa-sun {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            color: var(--gray);
+        }
+
+        .nav-item.active, .nav-item:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-item i {
+            font-size: 1.1rem;
+        }
+
+        .notification-badge {
+            background: var(--accent);
+            color: white;
+            font-size: 0.7rem;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            right: 1rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: auto;
+            padding: 1rem;
+            border-radius: 12px;
+            background: var(--glass-dark);
+        }
+
+        .avatar {
+            position: relative;
+        }
+
+        .avatar img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .status-indicator {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid var(--glass);
+        }
+
+        .status-indicator.online {
+            background: var(--success);
+        }
+
+        .user-info h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .user-info p {
+            font-size: 0.75rem;
+            color: var(--gray);
+        }
+
+        /* Dashboard Styles */
+        .dashboard {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: var(--glass);
+            border-radius: 12px;
+            padding: 0.5rem 1rem;
+            width: 300px;
+            transition: var(--transition);
+        }
+
+        .search-bar:focus-within {
+            box-shadow: 0 0 0 2px var(--primary-light);
+        }
+
+        .search-bar i {
+            color: var(--gray);
+            margin-right: 0.5rem;
+        }
+
+        .search-bar input {
+            border: none;
+            background: transparent;
+            outline: none;
+            width: 100%;
+            color: var(--dark);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .notification-btn {
+            background: var(--glass);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--dark);
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .notification-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .emergency-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .emergency-btn:hover {
+            background: #d90429;
+            transform: translateY(-2px);
+        }
+
+        /* Health Overview */
+        .health-overview {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .overview-card {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(239, 35, 60, 0.1);
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--danger);
+            transition: var(--transition);
+        }
+
+        .remove-btn:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .patient-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .patient-avatar img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .patient-details h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .patient-details p {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .health-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-tag {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .status-tag.stable {
+            background: rgba(76, 201, 240, 0.2);
+            color: var(--success);
+        }
+
+        .last-update {
+            font-size: 0.75rem;
+            color: var(--gray);
+        }
+
+        .vital-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+
+        .vital-card {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            border-radius: var(--border-radius);
+            padding: 1.25rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .vital-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .vital-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .vital-header i {
+            font-size: 1.25rem;
+        }
+
+        .vital-header h4 {
+            font-size: 0.9rem;
+            font-weight: 500;
+            flex-grow: 1;
+        }
+
+        .vital-trend {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .vital-trend.up {
+            background: rgba(239, 35, 60, 0.1);
+            color: var(--danger);
+        }
+
+        .vital-trend.down {
+            background: rgba(76, 201, 240, 0.2);
+            color: var(--success);
+        }
+
+        .vital-trend.stable {
+            background: rgba(108, 117, 125, 0.1);
+            color: var(--gray);
+        }
+
+        .vital-value {
+            display: flex;
+            align-items: baseline;
+            gap: 0.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .vital-value h2 {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .vital-value span {
+            font-size: 1rem;
+            color: var(--gray);
+        }
+
+        .vital-graph {
+            height: 60px;
+            width: 100%;
+        }
+
+        /* Detailed Monitoring */
+        .detailed-monitoring {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .ecg-card, .ai-analysis-card {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--glass-dark);
+        }
+
+        .card-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-icon {
+            background: transparent;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--gray);
+            transition: var(--transition);
+        }
+
+        .btn-icon:hover {
+            background: var(--glass-dark);
+            color: var(--dark);
+        }
+
+        .ecg-graph {
+            padding: 1rem 1.5rem;
+            height: 200px;
+        }
+
+        .ecg-controls {
+            display: flex;
+            gap: 1rem;
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid var(--glass-dark);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            flex-grow: 1;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            flex-grow: 1;
+            justify-content: center;
+        }
+
+        .btn-outline:hover {
+            background: rgba(67, 97, 238, 0.1);
+        }
+
+        .ai-results {
+            padding: 1.25rem 1.5rem;
+        }
+
+        .risk-assessment {
+            margin-bottom: 1.5rem;
+        }
+
+        .risk-assessment h4 {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--gray);
+        }
+
+        .risk-meter {
+            height: 8px;
+            background: rgba(108, 117, 125, 0.1);
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+        }
+
+        .risk-level {
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        .risk-level.low {
+            background: var(--success);
+            width: 30%;
+        }
+
+        .risk-level.medium {
+            background: var(--warning);
+            width: 60%;
+        }
+
+        .risk-level.high {
+            background: var(--danger);
+            width: 90%;
+        }
+
+        .risk-value {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .anomaly-detection h4 {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+            color: var(--gray);
+        }
+
+        .anomaly-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .anomaly-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .anomaly-list i {
+            font-size: 0.9rem;
+        }
+
+        .anomaly-list .warning {
+            color: var(--warning);
+        }
+
+        .anomaly-list .info {
+            color: var(--primary-light);
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .status-badge.analyzing {
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+
+        .ai-actions {
+            display: flex;
+            gap: 1rem;
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid var(--glass-dark);
+        }
+
+        .voice-command {
+            background: var(--accent);
+            color: white;
+        }
+
+        .voice-command:hover {
+            background: #e5177b;
+        }
+
+        /* Additional Features */
+        .additional-features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .medication-tracker, .activity-tracker {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .medication-list {
+            padding: 1rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .medication-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .medication-item:hover {
+            background: var(--glass-dark);
+        }
+
+        .medication-info {
+            flex-grow: 1;
+        }
+
+        .medication-info h4 {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .medication-info p {
+            font-size: 0.75rem;
+            color: var(--gray);
+        }
+
+        .medication-time {
+            font-size: 0.8rem;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .medication-status {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .medication-status.taken {
+            background: rgba(76, 201, 240, 0.2);
+            color: var(--success);
+        }
+
+        .medication-status.pending {
+            background: rgba(255, 158, 0, 0.2);
+            color: var(--warning);
+        }
+
+        .activity-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            padding: 1rem 1.5rem;
+            gap: 1rem;
+        }
+
+        .activity-metric {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--gray);
+        }
+
+        .activity-graph {
+            height: 120px;
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            border-radius: var(--border-radius);
+            width: 100%;
+            max-width: 500px;
+            box-shadow: var(--shadow);
+            transform: translateY(20px);
+            transition: var(--transition);
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--glass-dark);
+        }
+
+        .modal-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .close-modal {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+            transition: var(--transition);
+        }
+
+        .close-modal:hover {
+            color: var(--danger);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .emergency-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .emergency-option {
+            background: var(--glass);
+            border: none;
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .emergency-option i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .emergency-option.cardiac {
+            color: var(--danger);
+        }
+
+        .emergency-option.fall {
+            color: var(--warning);
+        }
+
+        .emergency-option.respiratory {
+            color: var(--primary);
+        }
+
+        .emergency-option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .emergency-contacts h4 {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .contact-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            background: var(--glass-dark);
+            transition: var(--transition);
+        }
+
+        .contact-item:hover {
+            background: rgba(67, 97, 238, 0.1);
+        }
+
+        .contact-item img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .contact-item span {
+            flex-grow: 1;
+            font-size: 0.9rem;
+        }
+
+        .contact-item i {
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .detailed-monitoring, .additional-features {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: -100%;
+                width: 280px;
+                height: 100vh;
+                z-index: 100;
+                transition: var(--transition);
+            }
+            
+            .sidebar.active {
+                left: 0;
+            }
+            
+            .dashboard {
+                padding: 1rem;
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+            
+            .search-bar {
+                width: 100%;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        /* Sidebar Toggle for Mobile */
+        .sidebar-toggle {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            background: var(--primary);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 90;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar-toggle {
+                display: flex;
+            }
+        }
+
+        /* Remove Confirmation Modal */
+        .confirmation-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .confirmation-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .confirmation-content {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transform: translateY(20px);
+            transition: var(--transition);
+        }
+
+        .confirmation-modal.active .confirmation-content {
+            transform: translateY(0);
+        }
+
+        .confirmation-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            justify-content: center;
+        }
+
+        .confirm-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .confirm-btn:hover {
+            background: #d90429;
+        }
+
+        .cancel-btn {
+            background: var(--glass-dark);
+            color: var(--dark);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .cancel-btn:hover {
+            background: var(--primary-light);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Holographic Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>HealthSphere Pro</span>
+                </div>
+                <button class="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                    <i class="fas fa-sun"></i>
+                </button>
+            </div>
+            
+            <nav class="nav-menu">
+                <div class="nav-item active">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                    <div class="notification-badge">3</div>
+                </div>
+                <div class="nav-item">
+                    <i class="fas fa-brain"></i>
+                    <span>AI Analysis</span>
+                </div>
+                <div class="nav-item">
+                    <i class="fas fa-video"></i>
+                    <span>Telemedicine</span>
+                </div>
+                <div class="nav-item">
+                    <i class="fas fa-dna"></i>
+                    <span>Genomics</span>
+                </div>
+                <div class="nav-item">
+                    <i class="fas fa-pills"></i>
+                    <span>Medications</span>
+                </div>
+                <div class="nav-item">
+                    <i class="fas fa-utensils"></i>
+                    <span>Nutrition</span>
+                </div>
+            </nav>
+            
+            <div class="user-profile">
+                <div class="avatar">
+                    <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="User">
+                    <div class="status-indicator online"></div>
+                </div>
+                <div class="user-info">
+                    <h4>Dr. Sarah Johnson</h4>
+                    <p>Cardiologist</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Dashboard -->
+        <main class="dashboard">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search patients, reports...">
+                </div>
+                <div class="header-actions">
+                    <button class="notification-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-count">5</span>
+                    </button>
+                    <button class="emergency-btn">
+                        <i class="fas fa-plus"></i>
+                        New Emergency
+                    </button>
+                </div>
+            </header>
+
+            <!-- Health Overview -->
+            <section class="health-overview">
+                <div class="overview-card">
+                    <button class="remove-btn" data-target="overview-card">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <h3>Patient Overview</h3>
+                    <div class="patient-info">
+                        <div class="patient-avatar">
+                            <img src="https://randomuser.me/api/portraits/men/42.jpg" alt="Patient">
+                        </div>
+                        <div class="patient-details">
+                            <h4>John Anderson</h4>
+                            <p>42 years · Male · 175cm · 78kg</p>
+                            <div class="health-status">
+                                <span class="status-tag stable">Stable Condition</span>
+                                <span class="last-update">Updated 5 min ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vital-stats-grid">
+                    <div class="vital-card heart-rate">
+                        <button class="remove-btn" data-target="heart-rate">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <div class="vital-header">
+                            <i class="fas fa-heart"></i>
+                            <h4>Heart Rate</h4>
+                            <div class="vital-trend up">
+                                <i class="fas fa-arrow-up"></i> 8%
+                            </div>
+                        </div>
+                        <div class="vital-value">
+                            <h2>78</h2>
+                            <span>BPM</span>
+                        </div>
+                        <div class="vital-graph" id="heartRateChart"></div>
+                    </div>
+
+                    <div class="vital-card blood-pressure">
+                        <button class="remove-btn" data-target="blood-pressure">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <div class="vital-header">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <h4>Blood Pressure</h4>
+                            <div class="vital-trend down">
+                                <i class="fas fa-arrow-down"></i> 3%
+                            </div>
+                        </div>
+                        <div class="vital-value">
+                            <h2>122</h2>
+                            <span>/</span>
+                            <h2>78</h2>
+                            <span>mmHg</span>
+                        </div>
+                        <div class="vital-graph" id="bloodPressureChart"></div>
+                    </div>
+
+                    <div class="vital-card oxygen">
+                        <button class="remove-btn" data-target="oxygen">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <div class="vital-header">
+                            <i class="fas fa-lungs"></i>
+                            <h4>SpO₂</h4>
+                            <div class="vital-trend stable">
+                                <i class="fas fa-equals"></i> 0%
+                            </div>
+                        </div>
+                        <div class="vital-value">
+                            <h2>98</h2>
+                            <span>%</span>
+                        </div>
+                        <div class="vital-graph" id="oxygenChart"></div>
+                    </div>
+
+                    <div class="vital-card temperature">
+                        <button class="remove-btn" data-target="temperature">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <div class="vital-header">
+                            <i class="fas fa-temperature-high"></i>
+                            <h4>Temperature</h4>
+                            <div class="vital-trend up">
+                                <i class="fas fa-arrow-up"></i> 1%
+                            </div>
+                        </div>
+                        <div class="vital-value">
+                            <h2>36.8</h2>
+                            <span>°C</span>
+                        </div>
+                        <div class="vital-graph" id="temperatureChart"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Detailed Monitoring -->
+            <section class="detailed-monitoring">
+                <div class="ecg-card">
+                    <button class="remove-btn" data-target="ecg-card">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="card-header">
+                        <h3>Real-time ECG Monitoring</h3>
+                        <div class="card-actions">
+                            <button class="btn-icon">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                            <button class="btn-icon">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="ecg-graph" id="ecgChart"></div>
+                    <div class="ecg-controls">
+                        <button class="btn-primary">
+                            <i class="fas fa-play"></i> Start Monitoring
+                        </button>
+                        <button class="btn-outline">
+                            <i class="fas fa-file-export"></i> Export Data
+                        </button>
+                    </div>
+                </div>
+
+                <div class="ai-analysis-card">
+                    <button class="remove-btn" data-target="ai-analysis-card">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="card-header">
+                        <h3>AI Health Analysis</h3>
+                        <div class="analysis-status">
+                            <span class="status-badge analyzing">
+                                <i class="fas fa-circle-notch fa-spin"></i> Analyzing
+                            </span>
+                        </div>
+                    </div>
+                    <div class="ai-results">
+                        <div class="risk-assessment">
+                            <h4>Cardiac Risk Assessment</h4>
+                            <div class="risk-meter">
+                                <div class="risk-level low" style="width: 30%"></div>
+                            </div>
+                            <span class="risk-value">Low (30%)</span>
+                        </div>
+                        <div class="anomaly-detection">
+                            <h4>Detected Anomalies</h4>
+                            <ul class="anomaly-list">
+                                <li>
+                                    <i class="fas fa-exclamation-triangle warning"></i>
+                                    Occasional PVCs detected
+                                </li>
+                                <li>
+                                    <i class="fas fa-info-circle info"></i>
+                                    Mild sinus arrhythmia
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="ai-actions">
+                        <button class="btn-icon voice-command">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <button class="btn-primary">
+                            <i class="fas fa-robot"></i> Request Full Analysis
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Additional Features -->
+            <section class="additional-features">
+                <div class="medication-tracker">
+                    <button class="remove-btn" data-target="medication-tracker">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="card-header">
+                        <h3>Medication Schedule</h3>
+                        <button class="btn-icon">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="medication-list">
+                        <div class="medication-item">
+                            <div class="medication-info">
+                                <h4>Atorvastatin</h4>
+                                <p>20mg · Cholesterol</p>
+                            </div>
+                            <div class="medication-time">
+                                <i class="fas fa-bell"></i>
+                                08:00 AM
+                            </div>
+                            <div class="medication-status taken">
+                                Taken
+                            </div>
+                        </div>
+                        <div class="medication-item">
+                            <div class="medication-info">
+                                <h4>Metoprolol</h4>
+                                <p>50mg · Blood Pressure</p>
+                            </div>
+                            <div class="medication-time">
+                                <i class="fas fa-bell"></i>
+                                12:00 PM
+                            </div>
+                            <div class="medication-status pending">
+                                Pending
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="activity-tracker">
+                    <button class="remove-btn" data-target="activity-tracker">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="card-header">
+                        <h3>Daily Activity</h3>
+                        <div class="time-filter">
+                            <select>
+                                <option>Today</option>
+                                <option>Week</option>
+                                <option>Month</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="activity-stats">
+                        <div class="activity-metric">
+                            <div class="metric-value">5,842</div>
+                            <div class="metric-label">Steps</div>
+                        </div>
+                        <div class="activity-metric">
+                            <div class="metric-value">7.2</div>
+                            <div class="metric-label">km</div>
+                        </div>
+                        <div class="activity-metric">
+                            <div class="metric-value">420</div>
+                            <div class="metric-label">Calories</div>
+                        </div>
+                    </div>
+                    <div class="activity-graph" id="activityChart"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Emergency Modal -->
+    <div class="modal-overlay" id="emergencyModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Emergency Alert</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="emergency-options">
+                    <button class="emergency-option cardiac">
+                        <i class="fas fa-heartbeat"></i>
+                        Cardiac Emergency
+                    </button>
+                    <button class="emergency-option fall">
+                        <i class="fas fa-user-fall"></i>
+                        Fall Detection
+                    </button>
+                    <button class="emergency-option respiratory">
+                        <i class="fas fa-lungs"></i>
+                        Respiratory Distress
+                    </button>
+                </div>
+                <div class="emergency-contacts">
+                    <h4>Alert Contacts</h4>
+                    <div class="contact-list">
+                        <div class="contact-item">
+                            <img src="https://randomuser.me/api/portraits/women/33.jpg" alt="Contact">
+                            <span>Dr. Emily Wilson</span>
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div class="contact-item">
+                            <img src="https://randomuser.me/api/portraits/men/22.jpg" alt="Contact">
+                            <span>Emergency Services</span>
+                            <i class="fas fa-phone"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove Confirmation Modal -->
+    <div class="confirmation-modal" id="removeConfirmationModal">
+        <div class="confirmation-content">
+            <h3>Remove Dashboard Item</h3>
+            <p>Are you sure you want to remove this item from your dashboard?</p>
+            <div class="confirmation-buttons">
+                <button class="cancel-btn" id="cancelRemove">Cancel</button>
+                <button class="confirm-btn" id="confirmRemove">Remove</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Toggle for Mobile -->
+    <div class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.querySelector('.theme-toggle');
+        const body = document.body;
+
+        // Check for saved theme preference or use preferred color scheme
+        const savedTheme = localStorage.getItem('theme') || 
+                        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        body.setAttribute('data-theme', savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+
+        // Initialize Charts
+        function initCharts() {
+            // Heart Rate Chart
+            const heartRateChart = new ApexCharts(document.querySelector("#heartRateChart"), {
+                series: [{
+                    name: "Heart Rate",
+                    data: generateRandomData(12, 70, 90)
+                }],
+                chart: {
+                    type: 'area',
+                    height: '100%',
+                    sparkline: {
+                        enabled: true
+                    },
+                    animations: {
+                        enabled: true,
+                        easing: 'linear',
+                        dynamicAnimation: {
+                            speed: 1000
+                        }
+                    }
+                },
+                stroke: {
+                    curve: 'smooth',
+                    width: 2,
+                    colors: ['#ef4444']
+                },
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        shadeIntensity: 1,
+                        opacityFrom: 0.7,
+                        opacityTo: 0.3,
+                        stops: [0, 100]
+                    },
+                    colors: ['#f8f9fa']
+                },
+                tooltip: {
+                    enabled: false
+                },
+                colors: ['#ef4444']
+            });
+            heartRateChart.render();
+
+            // Blood Pressure Chart
+            const bloodPressureChart = new ApexCharts(document.querySelector("#bloodPressureChart"), {
+                series: [{
+                    name: "Systolic",
+                    data: generateRandomData(12, 110, 130)
+                }, {
+                    name: "Diastolic",
+                    data: generateRandomData(12, 70, 85)
+                }],
+                chart: {
+                    type: 'line',
+                    height: '100%',
+                    sparkline: {
+                        enabled: true
+                    }
+                },
+                stroke: {
+                    curve: 'smooth',
+                    width: 2,
+                    colors: ['#4361ee', '#3f37c9']
+                },
+                tooltip: {
+                    enabled: false
+                },
+                colors: ['#4361ee', '#3f37c9']
+            });
+            bloodPressureChart.render();
+
+            // Oxygen Chart
+            const oxygenChart = new ApexCharts(document.querySelector("#oxygenChart"), {
+                series: [{
+                    name: "SpO₂",
+                    data: generateRandomData(12, 96, 99)
+                }],
+                chart: {
+                    type: 'area',
+                    height: '100%',
+                    sparkline: {
+                        enabled: true
+                    }
+                },
+                stroke: {
+                    curve: 'smooth',
+                    width: 2,
+                    colors: ['#4cc9f0']
+                },
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        shadeIntensity: 1,
+                        opacityFrom: 0.7,
+                        opacityTo: 0.3,
+                        stops: [0, 100]
+                    },
+                    colors: ['#f8f9fa']
+                },
+                tooltip: {
+                    enabled: false
+                },
+                colors: ['#4cc9f0']
+            });
+            oxygenChart.render();
+
+            // Temperature Chart
+            const temperatureChart = new ApexCharts(document.querySelector("#temperatureChart"), {
+                series: [{
+                    name: "Temperature",
+                    data: generateRandomData(12, 36.2, 37.2)
+                }],
+                chart: {
+                    type: 'line',
+                    height: '100%',
+                    sparkline: {
+                        enabled: true
+                    }
+                },
+                stroke: {
+                    curve: 'smooth',
+                    width: 2,
+                    colors: ['#ff9e00']
+                },
+                tooltip: {
+                    enabled: false
+                },
+                colors: ['#ff9e00']
+            });
+            temperatureChart.render();
+
+            // ECG Chart
+            const ecgChart = new ApexCharts(document.querySelector("#ecgChart"), {
+                series: [{
+                    name: "ECG",
+                    data: generateECGData()
+                }],
+                chart: {
+                    type: 'line',
+                    height: '100%',
+                    animations: {
+                        enabled: true,
+                        easing: 'linear',
+                        dynamicAnimation: {
+                            speed: 1000
+                        }
+                    },
+                    toolbar: {
+                        show: false
+                    },
+                    zoom: {
+                        enabled: false
+                    }
+                },
+                stroke: {
+                    curve: 'straight',
+                    width: 2,
+                    colors: ['#ef4444']
+                },
+                grid: {
+                    show: false
+                },
+                tooltip: {
+                    enabled: false
+                },
+                xaxis: {
+                    labels: {
+                        show: false
+                    },
+                    axisTicks: {
+                        show: false
+                    }
+                },
+                yaxis: {
+                    min: -1,
+                    max: 1,
+                    labels: {
+                        show: false
+                    }
+                },
+                colors: ['#ef4444']
+            });
+            ecgChart.render();
+
+            // Activity Chart
+            const activityChart = new ApexCharts(document.querySelector("#activityChart"), {
+                series: [{
+                    name: "Steps",
+                    data: generateActivityData()
+                }],
+                chart: {
+                    type: 'bar',
+                    height: '100%',
+                    sparkline: {
+                        enabled: true
+                    }
+                },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 4,
+                        columnWidth: '60%',
+                        distributed: true
+                    }
+                },
+                colors: ['#4361ee', '#4895ef', '#4cc9f0', '#4361ee', '#4895ef', '#4cc9f0', '#4361ee'],
+                tooltip: {
+                    enabled: false
+                }
+            });
+            activityChart.render();
+
+            // Simulate real-time ECG updates
+            setInterval(() => {
+                const newData = generateECGData();
+                ecgChart.updateSeries([{
+                    data: newData
+                }]);
+            }, 1000);
+        }
+
+        // Generate random data for charts
+        function generateRandomData(count, min, max) {
+            const data = [];
+            for (let i = 0; i < count; i++) {
+                data.push((Math.random() * (max - min) + min).toFixed(1));
+            }
+            return data;
+        }
+
+        // Generate ECG-like data
+        function generateECGData() {
+            const data = [];
+            const points = 100;
+            const baseline = 0;
+            const pWave = 0.25;
+            const qrsComplex = -0.5;
+            const tWave = 0.3;
+            
+            for (let i = 0; i < points; i++) {
+                // Simulate ECG waveform
+                if (i % 30 === 0) {
+                    // QRS complex
+                    data.push(qrsComplex);
+                } else if (i % 30 === 1) {
+                    // Quick return to baseline after QRS
+                    data.push(baseline);
+                } else if (i % 30 === 5) {
+                    // P wave
+                    data.push(pWave);
+                } else if (i % 30 === 20) {
+                    // T wave
+                    data.push(tWave);
+                } else {
+                    // Baseline with slight noise
+                    data.push(baseline + (Math.random() * 0.1 - 0.05));
+                }
+            }
+            return data;
+        }
+
+        // Generate activity data
+        function generateActivityData() {
+            return [
+                Math.floor(Math.random() * 3000 + 2000), // Mon
+                Math.floor(Math.random() * 3000 + 2000), // Tue
+                Math.floor(Math.random() * 3000 + 2000), // Wed
+                Math.floor(Math.random() * 3000 + 2000), // Thu
+                Math.floor(Math.random() * 3000 + 2000), // Fri
+                Math.floor(Math.random() * 3000 + 2000), // Sat
+                Math.floor(Math.random() * 3000 + 2000)  // Sun
+            ];
+        }
+
+        // Emergency Modal
+        const emergencyBtn = document.querySelector('.emergency-btn');
+        const emergencyModal = document.getElementById('emergencyModal');
+        const closeModalBtn = document.querySelector('.close-modal');
+
+        emergencyBtn.addEventListener('click', () => {
+            emergencyModal.classList.add('active');
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            emergencyModal.classList.remove('active');
+        });
+
+        // Voice Command
+        const voiceCommandBtn = document.querySelector('.voice-command');
+
+        voiceCommandBtn.addEventListener('click', () => {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert('Voice commands are not supported in your browser');
+                return;
+            }
+
+            const recognition = new webkitSpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.start();
+            voiceCommandBtn.classList.add('pulse');
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript.toLowerCase();
+                processVoiceCommand(transcript);
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error', event.error);
+                voiceCommandBtn.classList.remove('pulse');
+            };
+
+            recognition.onend = () => {
+                voiceCommandBtn.classList.remove('pulse');
+            };
+        });
+
+        function processVoiceCommand(command) {
+            const aiOutput = document.querySelector('.ai-output');
+            aiOutput.textContent = `Processing: "${command}"`;
+            
+            // Simulate AI processing
+            setTimeout(() => {
+                if (command.includes('heart') || command.includes('rate')) {
+                    aiOutput.innerHTML = `Heart rate analysis:<br><br>
+                    Current: 78 BPM<br>
+                    Trend: Normal sinus rhythm<br>
+                    Variability: Healthy (45ms)`;
+                } else if (command.includes('blood') || command.includes('pressure')) {
+                    aiOutput.innerHTML = `Blood pressure analysis:<br><br>
+                    Current: 122/78 mmHg<br>
+                    Classification: Normal<br>
+                    Recommendation: Continue current regimen`;
+                } else if (command.includes('oxygen') || command.includes('spo2')) {
+                    aiOutput.innerHTML = `Oxygen saturation analysis:<br><br>
+                    Current: 98%<br>
+                    Status: Excellent<br>
+                    No signs of hypoxemia`;
+                } else {
+                    aiOutput.innerHTML = `I analyzed your health data and found no critical issues.<br><br>
+                    For more specific analysis, try mentioning:<br>
+                    - "Heart rate"<br>
+                    - "Blood pressure"<br>
+                    - "Oxygen levels"`;
+                }
+            }, 1500);
+        }
+
+        // Simulate real-time vital signs updates
+        function simulateRealTimeUpdates() {
+            setInterval(() => {
+                // Randomly fluctuate heart rate between 70-90
+                const heartRate = Math.floor(Math.random() * 21 + 70);
+                document.querySelector('.heart-rate .vital-value h2').textContent = heartRate;
+                
+                // Update trend indicator
+                const trend = document.querySelector('.heart-rate .vital-trend');
+                const randomChange = Math.random();
+                if (randomChange > 0.6) {
+                    trend.innerHTML = '<i class="fas fa-arrow-up"></i> ' + Math.floor(Math.random() * 5 + 1) + '%';
+                    trend.className = 'vital-trend up';
+                } else if (randomChange < 0.4) {
+                    trend.innerHTML = '<i class="fas fa-arrow-down"></i> ' + Math.floor(Math.random() * 5 + 1) + '%';
+                    trend.className = 'vital-trend down';
+                } else {
+                    trend.innerHTML = '<i class="fas fa-equals"></i> 0%';
+                    trend.className = 'vital-trend stable';
+                }
+            }, 5000);
+        }
+
+        // Remove Dashboard Items Functionality
+        const removeConfirmationModal = document.getElementById('removeConfirmationModal');
+        const cancelRemoveBtn = document.getElementById('cancelRemove');
+        const confirmRemoveBtn = document.getElementById('confirmRemove');
+        let currentItemToRemove = null;
+
+        // Add event listeners to all remove buttons
+        document.querySelectorAll('.remove-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentItemToRemove = btn.getAttribute('data-target');
+                removeConfirmationModal.classList.add('active');
+            });
+        });
+
+        // Cancel removal
+        cancelRemoveBtn.addEventListener('click', () => {
+            removeConfirmationModal.classList.remove('active');
+            currentItemToRemove = null;
+        });
+
+        // Confirm removal
+        confirmRemoveBtn.addEventListener('click', () => {
+            if (currentItemToRemove) {
+                // Find all elements with this data-target
+                document.querySelectorAll(`[data-target="${currentItemToRemove}"]`).forEach(btn => {
+                    // Get the parent card element
+                    const card = btn.closest('.card, .overview-card, .vital-card');
+                    if (card) {
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateX(100px)';
+                        setTimeout(() => {
+                            card.remove();
+                        }, 300);
+                    }
+                });
+            }
+            removeConfirmationModal.classList.remove('active');
+            currentItemToRemove = null;
+        });
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            simulateRealTimeUpdates();
+            
+            // Set up navigation item clicks
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    navItems.forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                });
+            });
+            
+            // Set up medication status toggles
+            const medStatuses = document.querySelectorAll('.medication-status');
+            medStatuses.forEach(status => {
+                status.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (status.classList.contains('taken')) {
+                        status.classList.remove('taken');
+                        status.classList.add('pending');
+                        status.textContent = 'Pending';
+                    } else {
+                        status.classList.remove('pending');
+                        status.classList.add('taken');
+                        status.textContent = 'Taken';
+                    }
+                });
+            });
+
+            // Set up sidebar toggle for mobile
+            const sidebarToggle = document.querySelector('.sidebar-toggle');
+            const sidebar = document.querySelector('.sidebar');
+
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+            });
+        });
+    </script>
+</body>
+</html>
